@@ -17,7 +17,7 @@ from osbs.core import Openshift
 from osbs.http import HttpResponse
 from osbs.conf import Configuration
 from osbs.api import OSBS
-from tests.constants import (TEST_BUILD, TEST_CANCELLED_BUILD,
+from tests.constants import (TEST_BUILD, TEST_CANCELLED_BUILD, TEST_ORCHESTRATOR_BUILD,
                              TEST_GIT_BRANCH, TEST_BUILD_CONFIG,
                              TEST_GIT_URI_HUMAN_NAME, TEST_KOJI_TASK_ID,
                              TEST_FILESYSTEM_KOJI_TASK_ID, TEST_IMAGESTREAM)
@@ -109,6 +109,19 @@ class Connection(object):
                  }
             },
 
+            # Some 'builds' requests are with a trailing slash, some without:
+            (OAPI_PREFIX + "namespaces/default/builds/%s" % TEST_ORCHESTRATOR_BUILD,
+             OAPI_PREFIX + "namespaces/default/builds/%s/" % TEST_ORCHESTRATOR_BUILD): {
+                 "get": {
+                     # Contains a single build in Completed phase
+                     # named test-orchestrator-build-123
+                     "file": "build_test-orchestrator-build-123.json",
+                 },
+                 "put": {
+                     "file": "build_test-orchestrator-build-123.json",
+                 }
+            },
+
             # Simulate build cancellation
             (OAPI_PREFIX + "namespaces/default/builds/%s" % TEST_CANCELLED_BUILD,
              OAPI_PREFIX + "namespaces/default/builds/%s/" % TEST_CANCELLED_BUILD): {
@@ -129,6 +142,15 @@ class Connection(object):
                  "get": {
                      # Lines of text
                      "file": "build_test-build-123_logs.txt",
+                 },
+            },
+
+            (OAPI_PREFIX + "namespaces/default/builds/%s/log/" % TEST_ORCHESTRATOR_BUILD,
+             OAPI_PREFIX + "namespaces/default/builds/%s/log/?follow=0" % TEST_ORCHESTRATOR_BUILD,
+             OAPI_PREFIX + "namespaces/default/builds/%s/log/?follow=1" % TEST_ORCHESTRATOR_BUILD): {
+                 "get": {
+                     # Lines of text
+                     "file": "build_test-orchestrator-build-123_logs.txt",
                  },
             },
 

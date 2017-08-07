@@ -45,7 +45,8 @@ from osbs.repo_utils import RepoInfo
 
 from tests.constants import (TEST_ARCH, TEST_BUILD, TEST_COMPONENT, TEST_GIT_BRANCH, TEST_GIT_REF,
                              TEST_GIT_URI, TEST_TARGET, TEST_USER, INPUTS_PATH,
-                             TEST_KOJI_TASK_ID, TEST_FILESYSTEM_KOJI_TASK_ID, TEST_VERSION)
+                             TEST_KOJI_TASK_ID, TEST_FILESYSTEM_KOJI_TASK_ID, TEST_VERSION,
+                             TEST_ORCHESTRATOR_BUILD)
 from tests.build_.test_build_request import get_sample_prod_params
 from osbs.core import Openshift
 # These are used as fixtures
@@ -845,6 +846,19 @@ class TestOSBS(object):
             assert content == u"líne 1".encode('utf-8')
         with pytest.raises(StopIteration):
             assert next(logs)
+
+    def test_orchestrator_build_logs_api(self, osbs):
+        logs = osbs.get_orchestrator_build_logs(TEST_ORCHESTRATOR_BUILD)
+        assert isinstance(logs, GeneratorType)
+        (platform, content) = next(logs)
+        assert platform == None
+        assert isinstance(content, six.string_types)
+        assert content == u"- atomic_reactor.foo - DEBUG - this is from the orchestrator build"
+        (platform, content) = next(logs)
+        assert isinstance(platform, six.string_types)
+        assert platform == u"x86_64"
+        assert isinstance(content, six.string_types)
+        assert content == u"- atomic_reactor.foo - INFO - 2017-06-23 17:18:41,400 platform:- atomic_reactor.foo -  DEBUG - this is from a worker build"
 
     # osbs is a fixture here
     def test_pause_builds(self, osbs):  # noqa

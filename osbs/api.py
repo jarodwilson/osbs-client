@@ -705,6 +705,45 @@ class OSBS(object):
 
         return logs
 
+    def _parse_build_log_entry(self, entry):
+        items = entry.split()
+        if len(items) < 4:
+            raise OsbsValidationException("This is not a valid build log entry")
+        date = items[0]
+        time = items[1]
+        platform = items[2]
+        plen = len(date) + len(time) + len(platform) + 3
+        if not platform.startswith("platform:"):
+            warning.warn("Line logged without using the appropriate LoggerAdapter")
+            platform = None
+        else:
+            platform = platform.split(":")[1]
+        if platform == "-":
+            platform = None
+        line = entry[plen:]
+        return (platform, line)
+
+    @osbsapi
+    def get_orchestrator_build_logs(self, build_id, follow=False, wait_if_missing=False):
+        """
+        provide logs from orchestrator build
+
+        :param build_id: str
+        :param follow: bool, fetch logs as they come?
+        :param wait_if_missing: bool, if build doesn't exist, wait
+        :return: tuple with fields 'platform' and 'line'
+        """
+        logs = self.get_build_logs(build_id=build_id, follow=follow,
+                                   wait_if_missing=wait_if_missing, decode=True)
+
+        if not isinstance(logs, GeneratorType):
+            entries = logs.split("\n")
+        else:
+            entries = logs
+
+        for entry in entries:
+            yield self._parse_build_log_entry(entry)
+
     @osbsapi
     def get_docker_build_logs(self, build_id, decode_logs=True, build_json=None):
         """
